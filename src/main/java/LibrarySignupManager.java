@@ -17,24 +17,28 @@ public class LibrarySignupManager {
 
         AtomicLong daysLeft = new AtomicLong(inputObject.getDaysForScanning());
 
-
         var libraries = inputObject.getLibraries();
         var books = inputObject.getBooks();
 
-        libraries.forEach(lib -> {
-            double score = computeLibScore(lib, daysLeft.get(), books);
-            lib.setScore(score);
-        });
         final var sortedLibraries = libraries.stream().sorted(Comparator.comparing(Library::getScore))
                 .collect(Collectors.toList());
 
         while (daysLeft.get() > 0 && !sortedLibraries.isEmpty()) {
+            System.out.println("daysLeft.get() = " + daysLeft.get());
+            libraries.forEach(lib -> {
+                double score = computeLibScore(lib, daysLeft.get(), books);
+                lib.setScore(score);
+            });
+
             final var chosenLib = sortedLibraries.remove(0);
             daysLeft.getAndUpdate(operand -> operand - chosenLib.getSignupTime());
-            libsToSignUp.add(new OutputObject.Library(chosenLib.getId(), chosenLib.getBooks()));
-        }
 
-        // ------------------------------------------------
+            if (daysLeft.get() > chosenLib.getSignupTime()) {
+                libsToSignUp.add(new OutputObject.Library(chosenLib.getId(), chosenLib.getBooks()));
+            } else {
+                break;
+            }
+        }
 
         final var outputObject = new OutputObject();
         outputObject.setNumOfLibs(libsToSignUp.size());
@@ -50,6 +54,9 @@ public class LibrarySignupManager {
     // THE LATTER
     private double computeLibScore(Library lib, long daysLeft, List<Book> books) {
         final var timeAvailableForScanning = daysLeft - lib.getSignupTime();
+        if (timeAvailableForScanning < 0) {
+            return -1;
+        }
         final var numOfBooksLibCanScan = Math.min(timeAvailableForScanning * lib.getShippingSpeed(), lib.getBooks().size());
         return lib.getBooks().subList(0, (int) numOfBooksLibCanScan).stream().mapToInt(Book::getScore).sum();
     }

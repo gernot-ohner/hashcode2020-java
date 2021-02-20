@@ -16,19 +16,25 @@ public class Main {
                 "f_libraries_of_the_world.txt"
         };
 
-        String filename = filenames[3];
+//        for (String filename : filenames) {
+//            extracted(filename);
+//        }
+        extracted(filenames[3]);
+    }
 
+    private static void extracted(String filename) throws IOException, URISyntaxException {
         final var wrapperObject = new InputReader().parse(filename);
 
         final var outputObject = new LibrarySignupManager().compute(wrapperObject);
         final var score = computeScore(outputObject);
-        System.out.println("score = " + score);
+        System.out.println("score " + filename.charAt(0) + " : " + score);
 
         new OutputWriter().writeOutput(filename, outputObject);
     }
 
     private static long computeScore(OutputObject outputObject) {
-        return outputObject.getLibraries().stream().flatMap(library -> library.getBooks().stream())
+        return outputObject.getLibraries().stream()
+                .flatMap(library -> library.getBooks().stream())
                 .distinct().mapToLong(Book::getScore).sum();
     }
 }
